@@ -1,0 +1,6 @@
+*.pyc
+.ipynb_chechpoints
+*.hi
+*.o
+*.out
+*.swp
