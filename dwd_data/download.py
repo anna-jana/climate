@@ -7,7 +7,6 @@
 import dataclasses
 import io
 import json
-import logging
 import os
 import pathlib
 import re
@@ -137,13 +136,3 @@ def download_all_data(
         print(i + 1, "of", len(all_zip_link_matches), end=" ", flush=True)
         preprocess_and_save_single_station_zip(top_data_dir, zip_file)
 
-
-class WeatherStationData:
-    data: "any"
-    parameter: "any"
-    name: str
-    id: int
-
-    @classmethod
-    def load(cls, station_id):
-        raise NotImplementedError()
