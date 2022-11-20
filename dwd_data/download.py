@@ -2,10 +2,12 @@
 # by the german weather forcasting agency (deutscher wetterdienst)
 # as open data:
 # download, preprocesses store them on disk and load them back later
+# data source (top level domain, see code for specific page): https://opendata.dwd.de
 
 import dataclasses
 import io
 import json
+import logging
 import os
 import pathlib
 import re
@@ -92,6 +94,7 @@ def preprocess_and_save_single_station_zip(top_data_dir, zip_file):
 def download_all_data(
         top_data_dir="dwd_climate_data_germnay",
         index_url="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/historical/",
+        station_descriptions_filename="KL_Tageswerte_Beschreibung_Stationen.txt",
         ):
     # create top level directory containing all the different stations
     if os.path.exists(top_data_dir):
@@ -99,18 +102,27 @@ def download_all_data(
     os.mkdir(top_data_dir)
 
     # download the content of the index page with all the different stations
+    print("downloading index")
     index_res = urllib.request.urlopen(index_url)
     index_content_bytes = index_res.read()
     index_content = index_content_bytes.decode()
 
     # load the descriptions of all the stations including their geographical positions
     # and height above sealevel
-    station_descriptions_filename = "KL_Tageswerte_Beschreibung_Stationen.txt"
+    print("downloading station descriptions")
     descriptions_res = urllib.request.urlopen(urllib.request.urljoin(index_url, station_descriptions_filename))
-    descriptions = pd.read_csv(descriptions_res,
-            delim_whitespace=True, skipinitialspace=True, engine="python", skiprows=[1])
+    descriptions = pd.read_fwf(descriptions_res,
+            colspecs=[(0, 6), (6, 15), (15, 34), (34, 43),
+                      (43, 53), (53, 61), (61, 102), (102, 124)],
+            encoding="latin2", skiprows=2, header=None,
+            parse_dates=[1,2], infer_datetime_format=True,
+            )
+    descriptions.columns = ["Stations_id", "von_datum", "bis_datum",
+            "Stationshoehe", "geoBreite", "geoLaenge",
+            "Stationsname", "Bundesland"]
     descriptions.to_csv(os.path.join(top_data_dir, "station_descriptions.txt"))
 
+    print("downlowding weather data for each station")
     # extract all links from the index page which link to zip files
     html_line = r'\<a href="(.+\.zip)"\>.+\.zip\</a\>'
     all_zip_link_matches = re.findall(html_line, index_content)
