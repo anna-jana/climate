@@ -4,7 +4,6 @@
 # download, preprocesses store them on disk and load them back later
 # data source (top level domain, see code for specific page): https://opendata.dwd.de
 
-import dataclasses
 import io
 import json
 import os
@@ -16,6 +15,9 @@ import zipfile
 import numpy as np
 import pandas as pd
 
+metadata_name = "metadata.json"
+station_name_field = "station_name"
+station_id_field = "station_id"
 
 def preprocess_files(data_file, parameter_file):
     # even as this is german data, its using . as the decimal point
@@ -76,8 +78,8 @@ def preprocess_and_save_single_station_zip(top_data_dir, zip_file):
     os.mkdir(data_dir)
 
     # write metadata
-    metadata_filename = os.path.join(data_dir, "metadata.json")
-    metadata = {"station_name": station_name, "station_id": station_id}
+    metadata_filename = os.path.join(data_dir, metadata_name)
+    metadata = {station_name_field: station_name, station_id_field: station_id}
     with open(metadata_filename, "w") as f:
         json.dump(metadata, f)
 
@@ -89,9 +91,12 @@ def preprocess_and_save_single_station_zip(top_data_dir, zip_file):
 
     print(" done")
 
+default_top_data_dir = "dwd_climate_data_germnay"
+stations_filename = "station_descriptions.txt"
+
 
 def download_all_data(
-        top_data_dir="dwd_climate_data_germnay",
+        top_data_dir=default_top_data_dir,
         index_url="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/daily/kl/historical/",
         station_descriptions_filename="KL_Tageswerte_Beschreibung_Stationen.txt",
         ):
@@ -119,7 +124,7 @@ def download_all_data(
     descriptions.columns = ["Stations_id", "von_datum", "bis_datum",
             "Stationshoehe", "geoBreite", "geoLaenge",
             "Stationsname", "Bundesland"]
-    descriptions.to_csv(os.path.join(top_data_dir, "station_descriptions.txt"))
+    descriptions.to_csv(os.path.join(top_data_dir, stations_filename))
 
     print("downlowding weather data for each station")
     # extract all links from the index page which link to zip files
