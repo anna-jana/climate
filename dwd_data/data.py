@@ -27,13 +27,13 @@ station_descriptions_filename = "KL_Tageswerte_Beschreibung_Stationen.txt"
 def preprocess_data_file(data_file):
     # even as this is german data, its using . as the decimal point
     data = pd.read_csv(data_file,
-        sep=";", index_col="MESS_DATUM", parse_dates=["MESS_DATUM"], skipinitialspace=True,
-        dtype={"QN_3": "Int64", "QN_4": "Int64", "RSKF": "Int64", "SHK_TAG": "Int64"},)
+        sep=";", index_col="MESS_DATUM", parse_dates=["MESS_DATUM"], skipinitialspace=True)
+        #dtype={"QN_3": "int64", "QN_4": "int64", "RSKF": "int64", "SHK_TAG": "int64"},)
     data.pop("STATIONS_ID")
     data.pop("eor")
     # missing data is representated by -999 in the data set
     # this sadly converts all float types with missing values to obj types
-    data.replace(-999, pd.NA, inplace=True)
+    data.replace(-999, np.nan, inplace=True)
     return data
 
 def preprocess_parameter_file(parameter_file):
@@ -81,7 +81,7 @@ def preprocess_and_save_single_station_zip(zip_file, include_params):
         parameter = preprocess_parameter_file(zip_parameter_file)
 
     # write the preprocessed data to disk
-    data.to_hdf5(output_data_filename, station_id)
+    data.to_hdf(output_data_filename, "id" + station_id)
 
     if include_params:
         parameter.to_csv(output_parameter_filename)
@@ -99,7 +99,7 @@ def download_all_data():
     # load the descriptions of all the stations including their geographical positions
     # and height above sealevel
     print("downloading station descriptions")
-    stations_res = urllib.request.urlopen(urllib.request.urljoin(index_url, station_stations_filename))
+    stations_res = urllib.request.urlopen(urllib.request.urljoin(index_url, station_descriptions_filename))
     stations = pd.read_fwf(stations_res,
             colspecs=[(0, 6), (6, 15), (15, 34), (34, 43),
                       (43, 53), (53, 61), (61, 102), (102, 124)],
@@ -128,12 +128,12 @@ def download_all_data():
 
 ############################# loading the data back from disk ###############################
 def load_data(id):
-    return pd.read_hdf5(output_data_filename, str(id))
+    return pd.read_hdf(output_data_filename, "id" + str(id))
 
 def load_stations():
-    d = pd.read_csv(output_stations_filename), parse_dates=["von_datum", "bis_datum"])
+    d = pd.read_csv(output_stations_filename, parse_dates=["von_datum", "bis_datum"])
     d.drop(["Unnamed: 0"], axis=1, inplace=True)
     return d
 
 def load_parameter():
-    pd.read_csv(output_parameter_filename; skipinitialspace=True)
+    return pd.read_csv(output_parameter_filename, skipinitialspace=True)
