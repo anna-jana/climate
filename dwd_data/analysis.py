@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
 class Analysis:
-    def __init__(self, data_set):
-        data = self.data_set.data
+    def __init__(self, data):
         self.mean_year = data.groupby(data.index.day_of_year).aggregate(np.mean)
         self.years = data.groupby(data.index.year).aggregate([np.nanmin, np.nanmean, np.nanmax])
 
