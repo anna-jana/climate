@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 
+import data
+
 class Analysis:
     def __init__(self, data):
         self.mean_year = data.groupby(data.index.day_of_year).aggregate(np.mean)
@@ -34,4 +36,57 @@ def plot_station_positions(d):
     plt.title("Positions of DWD weather stations", pad=20)
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
+
+stations = data.load_stations()
+
+def name_of_id(i):
+    return stations.Stationsname[stations.Stations_id == i].iloc[0]
+
+def plot_mean_trend(i):
+    d = data.load_data(i)
+    a = Analysis(d)
+    a.years.TMK.nanmean.plot()
+    plt.xlabel("year")
+    plt.ylabel("mean temperature in year [°C]")
+    plt.title(name_of_id(i))
+
+def plot_max_trend(i):
+    d = data.load_data(i)
+    a = Analysis(d)
+    a.years.TXK.nanmax.plot()
+    plt.xlabel("year")
+    plt.ylabel("mean temperature in year [°C]")
+    plt.title(name_of_id(i))
+
+def plot_climate_diagram(i):
+    d = data.load_data(i)
+    by_months = d.groupby(d.index.month)
+    min_  = by_months.aggregate(np.min)
+    mean_ = by_months.aggregate(np.mean)
+    max_  = by_months.aggregate(np.max)
+    months = range(1, 12 + 1)
+
+    plt.figure()
+    ax1 = plt.gca()
+    ax2 = ax1.twinx()
+    ax1.fill_between(months, min_.TNK, max_.TXK, color="red", alpha=0.3)
+    ax1.plot(months, mean_.TMK, color="red")
+    ax1.set_ylabel("temperature [°C]")
+    ax1.set_xlabel("month")
+    ax1.set_xticks(months,
+            ["January", "February", "March", "April", "May", "June",
+             "July", "August", "September", "October", "November", "December",],
+            rotation=30)
+    ax1.set_title(name_of_id(i))
+    ax2.bar(months, mean_.RSK, zorder=1000)
+    ax2.set_ylabel("rainfall (height) [mm]")
+
+
+def find_id_by_name(name):
+    return stations.Stations_id[
+            stations.Stationsname.str.lower().str.contains(name.lower())
+    ].iloc[0]
+
+
+
 
