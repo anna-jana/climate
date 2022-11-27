@@ -39,34 +39,37 @@ def plot_station_positions(d):
 
 stations = data.load_stations()
 
-def name_of_id(i):
+def find_name_by_id(i):
     return stations.Stationsname[stations.Stations_id == i].iloc[0]
 
-def plot_mean_trend(i):
-    d = data.load_data(i)
+def find_id_by_name(name):
+    return stations.Stations_id[
+            stations.Stationsname.str.lower().str.contains(name.lower())
+    ].iloc[0]
+
+def plot_mean_trend(d, name=None):
     a = Analysis(d)
+    plt.figure(layout="constrained")
     a.years.TMK.nanmean.plot()
     plt.xlabel("year")
     plt.ylabel("mean temperature in year [°C]")
-    plt.title(name_of_id(i))
+    plt.title(name)
 
-def plot_max_trend(i):
-    d = data.load_data(i)
+def plot_max_trend(d):
     a = Analysis(d)
     a.years.TXK.nanmax.plot()
     plt.xlabel("year")
     plt.ylabel("mean temperature in year [°C]")
-    plt.title(name_of_id(i))
+    plt.title(name)
 
-def plot_climate_diagram(i):
-    d = data.load_data(i)
+def plot_climate_diagram(d, name=None):
     by_months = d.groupby(d.index.month)
     min_  = by_months.aggregate(np.min)
     mean_ = by_months.aggregate(np.mean)
     max_  = by_months.aggregate(np.max)
     months = range(1, 12 + 1)
 
-    plt.figure()
+    plt.figure(layout="constrained")
     ax1 = plt.gca()
     ax2 = ax1.twinx()
     ax1.fill_between(months, min_.TNK, max_.TXK, color="red", alpha=0.3)
@@ -77,15 +80,10 @@ def plot_climate_diagram(i):
             ["January", "February", "March", "April", "May", "June",
              "July", "August", "September", "October", "November", "December",],
             rotation=30)
-    ax1.set_title(name_of_id(i))
-    ax2.bar(months, mean_.RSK, zorder=1000)
+    ax1.set_title(name)
+    ax2.bar(months, mean_.RSK, alpha=0.7)
     ax2.set_ylabel("rainfall (height) [mm]")
 
-
-def find_id_by_name(name):
-    return stations.Stations_id[
-            stations.Stationsname.str.lower().str.contains(name.lower())
-    ].iloc[0]
 
 
 
