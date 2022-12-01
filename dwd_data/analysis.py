@@ -1,9 +1,8 @@
-import numpy as np
-import pandas as pd
+import itertools
+import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-
-import data
+import data, util
 
 # mean_year = data.groupby(data.index.day_of_year).aggregate(np.mean)
 
@@ -82,3 +81,33 @@ def plot_climate_diagram(d, name=None):
     ax2.bar(months, mean_.RSK, alpha=0.7)
     ax2.set_ylabel("rainfall (height) [mm]")
 
+
+def correlations_vs_distance(nsamples=1000, col="TMK"):
+    np.random.seed(42)
+    result = []
+    while len(result) < nsamples:
+        print(f"{len(result) + 1} of {nsamples}")
+        i = np.random.randint(stations.index.size)
+        j = np.random.randint(stations.index.size)
+        id1 = stations.Stations_id[i]
+        id2 = stations.Stations_id[j]
+        try:
+            d1 = data.load_data(id1)
+            d2 = data.load_data(id2)
+        except KeyError:
+            continue
+        c = util.timeseries_corr(d1[col], d2[col])
+        if not np.isfinite(c):
+            continue
+        d = util.geographic_distance(
+                stations.geoBreite[i], stations.geoLaenge[i],
+                stations.geoBreite[j], stations.geoLaenge[j],
+        )
+        result.append(dict(station1=id1, station2=id2, distance=d, correlation=c))
+    return pd.DataFrame(result)
+
+def plot_correlations_vs_distance(res, name):
+    plt.plot(res.distance, res.correlation, ".")
+    plt.xlabel("distance [km]")
+    plt.ylabel("correlation [1]")
+    plt.title(name)
